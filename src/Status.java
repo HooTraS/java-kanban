@@ -1,2 +1,5 @@
-package PACKAGE_NAME;public class Status {
+enum Status {
+    NEW,
+    IN_PROGRESS,
+    DONE
 }
