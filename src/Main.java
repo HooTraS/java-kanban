@@ -1,9 +1,9 @@
-import manager.TaskManager;
+import manager.InMemoryTaskManager;
 import model.*;
 
 public class Main {
     public static void main(String[] args) {
-        TaskManager manager = new TaskManager();
+        InMemoryTaskManager manager = new InMemoryTaskManager();
 
         int id1 = manager.addTask(new Task("Переезд", "Организовать переезд", Status.NEW));
         int id2 = manager.addTask(new Task("Ремонт", "Косметический ремонт в квартире", Status.IN_PROGRESS));
