@@ -1,7 +1,6 @@
 package manager;
 
 import model.Epic;
-import model.Status;
 import model.Subtask;
 import model.Task;
 
@@ -13,31 +12,33 @@ public class InMemoryTaskManager implements TaskManager {
     private final Map<Integer, Subtask> subtasks = new HashMap<>();
     private int currentId = 1;
 
-    private int generateId() {
-        return currentId++;
-    }
-
+    @Override
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
     }
 
+    @Override
     public List<Epic> getAllEpics() {
         return new ArrayList<>(epics.values());
     }
 
+    @Override
     public List<Subtask> getAllSubtasks() {
         return new ArrayList<>(subtasks.values());
     }
 
+    @Override
     public void clearAllTasks() {
         tasks.clear();
     }
 
+    @Override
     public void clearAllEpics() {
         epics.clear();
         subtasks.clear();
     }
 
+    @Override
     public void clearAllSubtasks() {
         for (Epic epic : epics.values()) {
             epic.getSubtaskIds().clear();
@@ -45,18 +46,22 @@ public class InMemoryTaskManager implements TaskManager {
         subtasks.clear();
     }
 
+    @Override
     public Task getTaskById(int id) {
         return tasks.get(id);
     }
 
+    @Override
     public Epic getEpicById(int id) {
         return epics.get(id);
     }
 
+    @Override
     public Subtask getSubtaskById(int id) {
         return subtasks.get(id);
     }
 
+    @Override
     public int addTask(Task task) {
         int id = generateId();
         task.setId(id);
@@ -64,6 +69,7 @@ public class InMemoryTaskManager implements TaskManager {
         return id;
     }
 
+    @Override
     public int addEpic(Epic epic) {
         int id = generateId();
         epic.setId(id);
@@ -71,6 +77,7 @@ public class InMemoryTaskManager implements TaskManager {
         return id;
     }
 
+    @Override
     public int addSubtask(Subtask subtask) {
         int epicId = subtask.getEpicId();
         Epic epic = epics.get(epicId);
@@ -85,12 +92,14 @@ public class InMemoryTaskManager implements TaskManager {
         return id;
     }
 
+    @Override
     public void updateTask(Task task) {
         if (tasks.containsKey(task.getId())) {
             tasks.put(task.getId(), task);
         }
     }
 
+    @Override
     public void updateEpic(Epic epic) {
         Epic oldEpic = epics.get(epic.getId());
         if (oldEpic != null) {
@@ -99,6 +108,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
+    @Override
     public void updateSubtask(Subtask subtask) {
         if (subtasks.containsKey(subtask.getId())) {
             subtasks.put(subtask.getId(), subtask);
@@ -109,10 +119,12 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
+    @Override
     public void deleteTaskById(int id) {
         tasks.remove(id);
     }
 
+    @Override
     public void deleteEpicById(int id) {
         Epic epic = epics.remove(id);
         if (epic != null) {
@@ -122,6 +134,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
+    @Override
     public void deleteSubtaskById(int id) {
         Subtask subtask = subtasks.remove(id);
         if (subtask != null) {
@@ -133,6 +146,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
+    @Override
     public List<Subtask> getSubtasksOfEpic(int epicId) {
         List<Subtask> result = new ArrayList<>();
         Epic epic = epics.get(epicId);
@@ -147,26 +161,4 @@ public class InMemoryTaskManager implements TaskManager {
         return result;
     }
 
-    private void updateEpicStatus(Epic epic) {
-        List<Integer> subIds = epic.getSubtaskIds();
-        if (subIds.isEmpty()) {
-            epic.setStatus(Status.NEW);
-            return;
-        }
-        boolean allNew = true;
-        boolean allDone = true;
-        for (Integer id : subIds) {
-            Status status = subtasks.get(id).getStatus();
-            if (status != Status.NEW) allNew = false;
-            if (status != Status.DONE) allDone = false;
-        }
-        if (allNew) {
-            epic.setStatus(Status.NEW);
-        } else if (allDone) {
-            epic.setStatus(Status.DONE);
-        } else {
-            epic.setStatus(Status.IN_PROGRESS);
-        }
-    }
 }
-
