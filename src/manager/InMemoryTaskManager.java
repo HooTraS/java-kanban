@@ -160,7 +160,6 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void clearAllEpic(int id) {
         if (epics.containsKey(id)) {
-            // Удаляем все подзадачи эпика
             for (Integer subId : epics.get(id).getSubtaskIds()) {
                 historyManager.remove(subId);
                 subtasks.remove(subId);
