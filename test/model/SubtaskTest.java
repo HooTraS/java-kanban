@@ -5,11 +5,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class SubtaskTest {
+
     @Test
     void subtaskCannotBeItsOwnEpic() {
-        Task task = new Task("t", "d", Status.NEW);
-        Subtask subtask = new Subtask("s", "d", Status.NEW, task.getId());
+        Epic epic = new Epic("Epic Title", "Epic Description", Status.NEW);
+        epic.setId(1);
 
-        assertNotEquals(subtask.getEpicId(), subtask.getId());
+        Subtask subtask = new Subtask("Subtask Title", "Subtask Description", Status.NEW, epic.getId());
+        subtask.setId(2);
+
+        assertNotEquals(subtask.getId(), subtask.getEpicId());
     }
 }
