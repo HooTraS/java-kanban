@@ -5,75 +5,66 @@ import model.Task;
 import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private static class Node {
-        Task task;
-        Node prev;
-        Node next;
+    private static class Node<T> {
+        T data;
+        Node<T> prev;
+        Node<T> next;
 
-        public Node(Node prev, Task task, Node next) {
-            this.task = task;
+        Node(Node<T> prev, T data, Node<T> next) {
+            this.data = data;
             this.prev = prev;
             this.next = next;
         }
     }
 
-    private final Map<Integer, Node> nodeMap = new HashMap<>();
-    private Node head;
-    private Node tail;
+    private final Map<Integer, Node<Task>> receivedTasks = new HashMap<>();
+    private Node<Task> head;
+    private Node<Task> tail;
 
     @Override
     public void add(Task task) {
         if (task == null) return;
 
-        // Удаляем старую версию из истории, если была
         remove(task.getId());
 
-        // Добавляем новую в конец списка
-        linkLast(task);
-    }
-
-    private void linkLast(Task task) {
-        Node newNode = new Node(tail, task, null);
+        Node<Task> newNode = new Node<>(tail, task, null);
         if (tail != null) {
             tail.next = newNode;
         } else {
             head = newNode;
         }
         tail = newNode;
-        nodeMap.put(task.getId(), newNode);
+        receivedTasks.put(task.getId(), newNode);
     }
 
     @Override
     public void remove(int id) {
-        Node node = nodeMap.remove(id);
+        Node<Task> node = receivedTasks.remove(id);
         if (node != null) {
             removeNode(node);
         }
     }
 
-    private void removeNode(Node node) {
-        Node prev = node.prev;
-        Node next = node.next;
-
-        if (prev != null) {
-            prev.next = next;
+    private void removeNode(Node<Task> node) {
+        if (node.prev != null) {
+            node.prev.next = node.next;
         } else {
-            head = next;
+            head = node.next;
         }
 
-        if (next != null) {
-            next.prev = prev;
+        if (node.next != null) {
+            node.next.prev = node.prev;
         } else {
-            tail = prev;
+            tail = node.prev;
         }
     }
 
     @Override
     public List<Task> getHistory() {
         List<Task> history = new ArrayList<>();
-        Node current = head;
+        Node<Task> current = head;
         while (current != null) {
-            history.add(current.task);
+            history.add(current.data);
             current = current.next;
         }
         return history;
