@@ -7,11 +7,20 @@ public class Task {
     protected String description;
     protected int id;
     protected Status status;
+    protected TaskType type;
 
     public Task(String name, String description, Status status) {
         this.name = name;
         this.description = description;
         this.status = status;
+        this.type = TaskType.TASK;
+    }
+
+    public Task(String name, String description, Status status, TaskType type) {
+        this.name = name;
+        this.description = description;
+        this.status = status;
+        this.type = type;
     }
 
     public String getName() {
@@ -30,6 +39,11 @@ public class Task {
         return status;
     }
 
+
+    public TaskType getType() {
+        return type;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -44,6 +58,11 @@ public class Task {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+
+    public void setType(TaskType type) {
+        this.type = type;
     }
 
     @Override
@@ -64,7 +83,9 @@ public class Task {
         return "Task{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
                 ", status=" + status +
+                ", type=" + type +
                 '}';
     }
 }

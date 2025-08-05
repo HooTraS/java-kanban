@@ -5,17 +5,19 @@ import model.*;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    private final Map<Integer, Task> tasks = new HashMap<>();
-    private final Map<Integer, Epic> epics = new HashMap<>();
-    private final Map<Integer, Subtask> subtasks = new HashMap<>();
-    private final HistoryManager historyManager;
-    private int nextId = 1;
+    protected final Map<Integer, Task> tasks = new HashMap<>();
+    protected final Map<Integer, Epic> epics = new HashMap<>();
+    protected final Map<Integer, Subtask> subtasks = new HashMap<>();
+    protected final HistoryManager historyManager;
+    protected int nextId = 1;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         this.historyManager = historyManager;
     }
 
-    private int generateId() {
+
+
+    protected int generateId() {
         return nextId++;
     }
 
