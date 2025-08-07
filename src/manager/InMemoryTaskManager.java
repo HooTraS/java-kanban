@@ -16,7 +16,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     protected int generateId() {
-        return nextId ++;
+        return nextId++;
     }
 
     @Override
