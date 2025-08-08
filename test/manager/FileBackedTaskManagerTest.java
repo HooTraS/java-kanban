@@ -92,7 +92,8 @@ class FileBackedTaskManagerTest {
             assertEquals(expected.getName(), actual.getName());
             assertEquals(expected.getDescription(), actual.getDescription());
             assertEquals(expected.getStatus(), actual.getStatus());
-            assertEquals(expected.getType(), actual.getType());
+            assertEquals(expected.getSubtaskIds(), actual.getSubtaskIds());
+
         }
 
         for (int i = 0; i < originalSubtasks.size(); i++) {
