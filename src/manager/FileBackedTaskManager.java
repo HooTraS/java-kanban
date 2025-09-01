@@ -5,10 +5,13 @@ import model.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
     private final Path file;
-    private static final String HEADER = "id,type,name,status,description,epic";
+    private static final String HEADER = "id,type,name,status,description,startTime,duration,epic";
 
     public FileBackedTaskManager(Path file, HistoryManager historyManager) {
         super(historyManager);
@@ -43,6 +46,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 task.getName(),
                 task.getStatus().name(),
                 task.getDescription(),
+                task.getStartTime() != null ? task.getStartTime().toString() : "",
+                task.getDuration() != null ? String.valueOf(task.getDuration().toMinutes()) : "",
                 epicField
         );
     }
@@ -68,6 +73,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                         manager.epics.get(subtask.getEpicId()).addSubtaskId(id);
                     }
                 }
+                // добавляем в отсортированный список
+                if (task.getStartTime() != null && !(task instanceof Epic)) {
+                    manager.prioritizedTasks.add(task);
+                }
             }
             manager.nextId = maxId + 1;
         } catch (IOException e) {
@@ -77,15 +86,18 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private static Task fromString(String line) {
-        String[] parts = line.split(",", 6);
+        String[] parts = line.split(",", -1);
         int id = Integer.parseInt(parts[0]);
         TaskType type = TaskType.valueOf(parts[1]);
         String name = parts[2];
         Status status = Status.valueOf(parts[3]);
         String description = parts[4];
+        LocalDateTime startTime = parts[5].isBlank() ? null : LocalDateTime.parse(parts[5]);
+        Duration duration = parts[6].isBlank() ? null : Duration.ofMinutes(Long.parseLong(parts[6]));
+
         return switch (type) {
             case TASK -> {
-                Task task = new Task(name, description, status);
+                Task task = new Task(name, description, status, startTime, duration);
                 task.setId(id);
                 yield task;
             }
@@ -95,8 +107,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 yield epic;
             }
             case SUBTASK -> {
-                int epicId = Integer.parseInt(parts[5]);
-                Subtask subtask = new Subtask(name, description, status, epicId);
+                int epicId = Integer.parseInt(parts[7]);
+                Subtask subtask = new Subtask(name, description, status, epicId, startTime, duration);
                 subtask.setId(id);
                 yield subtask;
             }
@@ -105,76 +117,77 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     @Override
     public int addTask(Task task) {
+        checkTimeIntersection(task);
         int id = super.addTask(task);
+        if (task.getStartTime() != null) prioritizedTasks.add(task);
         save();
         return id;
     }
 
     @Override
     public void updateTask(Task task) {
+        checkTimeIntersection(task);
         super.updateTask(task);
+        prioritizedTasks.remove(task);
+        if (task.getStartTime() != null) prioritizedTasks.add(task);
         save();
     }
 
     @Override
     public void deleteTask(int id) {
+        Task task = tasks.get(id);
+        if (task != null) {
+            prioritizedTasks.remove(task);
+        }
         super.deleteTask(id);
         save();
     }
 
     @Override
-    public void clearAllTasks() {
-        super.clearAllTasks();
-        save();
-    }
-
-    @Override
-    public int addEpic(Epic epic) {
-        int id = super.addEpic(epic);
-        save();
-        return id;
-    }
-
-    @Override
-    public void updateEpic(Epic epic) {
-        super.updateEpic(epic);
-        save();
-    }
-
-    @Override
-    public void deleteEpic(int id) {
-        super.deleteEpic(id);
-        save();
-    }
-
-    @Override
-    public void clearAllEpics() {
-        super.clearAllEpics();
-        save();
-    }
-
-    @Override
     public int addSubtask(Subtask subtask) {
+        checkTimeIntersection(subtask);
         int id = super.addSubtask(subtask);
+        if (subtask.getStartTime() != null) prioritizedTasks.add(subtask);
         save();
         return id;
     }
 
     @Override
     public void updateSubtask(Subtask subtask) {
+        checkTimeIntersection(subtask);
         super.updateSubtask(subtask);
+        prioritizedTasks.remove(subtask);
+        if (subtask.getStartTime() != null) prioritizedTasks.add(subtask);
         save();
     }
 
     @Override
     public void deleteSubtask(int id) {
+        Subtask subtask = subtasks.get(id);
+        if (subtask != null) {
+            prioritizedTasks.remove(subtask);
+        }
         super.deleteSubtask(id);
         save();
     }
 
     @Override
-    public void clearAllSubtasks() {
-        super.clearAllSubtasks();
-        save();
+    public List<Task> getPrioritizedTasks() {
+        return new ArrayList<>(prioritizedTasks);
+    }
+
+    private void checkTimeIntersection(Task newTask) {
+        if (newTask.getStartTime() == null || newTask.getEndTime() == null) return;
+
+        for (Task existing : prioritizedTasks) {
+            if (existing.getStartTime() == null || existing.getEndTime() == null) continue;
+
+            boolean overlap = !(newTask.getEndTime().isBefore(existing.getStartTime())
+                    || newTask.getStartTime().isAfter(existing.getEndTime()));
+
+            if (overlap && newTask.getId() != existing.getId()) {
+                throw new IllegalArgumentException("Задача пересекается по времени с задачей id=" + existing.getId());
+            }
+        }
     }
 }

@@ -7,98 +7,95 @@ import model.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class InMemoryTaskManagerTest {
-    private TaskManager manager;
+public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager> {
 
     @BeforeEach
     void setup() {
-        manager = Managers.getDefault();
+        manager = new InMemoryTaskManager();
+        startTime = LocalDateTime.now();
+        duration = Duration.ofMinutes(30);
     }
 
     @Test
-    void addAndGetDifferentTaskTypes() {
-        Task task = new Task("task", "desc", Status.NEW);
-        Epic epic = new Epic("epic", "desc", Status.NEW);
-        int epicId = manager.addEpic(epic);
-        Subtask subtask = new Subtask("sub", "desc", Status.NEW, epicId);
-
-        int taskId = manager.addTask(task);
-        int subtaskId = manager.addSubtask(subtask);
-
-        assertEquals(task, manager.getTask(taskId));
-        assertEquals(epic, manager.getEpic(epicId));
-        assertEquals(subtask, manager.getSubtask(subtaskId));
-    }
-
-    @Test
-    void tasksWithManualAndAutoIdDoNotConflict() {
-        Task t1 = new Task("t1", "d", Status.NEW);
-        int id1 = manager.addTask(t1);
-
-        Task t2 = new Task("t2", "d", Status.NEW);
-        t2.setId(999);
-        int id2 = manager.addTask(t2);
-
-        assertNotEquals(id1, id2);
-    }
-
-    @Test
-    void taskDataDoesNotChangeWhenStored() {
-        Task t = new Task("t", "d", Status.NEW);
-        int id = manager.addTask(t);
-        Task stored = manager.getTask(id);
-
-        assertEquals("t", stored.getName());
-        assertEquals("d", stored.getDescription());
-        assertEquals(Status.NEW, stored.getStatus());
-    }
-
-    @Test
-    void deletingTaskAlsoRemovesItFromHistory() {
-        Task task = new Task("Task to delete", "desc", Status.NEW);
-        int taskId = manager.addTask(task);
-        manager.getTask(taskId); // Добавляем в историю
-
-        assertEquals(1, manager.getHistory().size());
-        manager.deleteTask(taskId);
-        assertTrue(manager.getHistory().isEmpty(), "Задача не удалена из истории");
-    }
-
-    @Test
-    void deletingSubtaskAlsoRemovesItFromHistory() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW);
-        int epicId = manager.addEpic(epic);
-        Subtask subtask = new Subtask("Sub", "desc", Status.NEW, epicId);
-        int subtaskId = manager.addSubtask(subtask);
-        manager.getSubtask(subtaskId); // В историю
-
-        assertEquals(1, manager.getHistory().size());
-        manager.deleteSubtask(subtaskId);
-        assertTrue(manager.getHistory().isEmpty(), "Подзадача не удалена из истории");
-    }
-
-    @Test
-    void deletingEpicAlsoRemovesItAndSubtasksFromHistory() {
+    void subtaskMustHaveEpic() {
         Epic epic = new Epic("Epic", "desc", Status.NEW);
         int epicId = manager.addEpic(epic);
 
-        Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId);
-        Subtask sub2 = new Subtask("Sub2", "desc", Status.NEW, epicId);
+        Subtask subtask = new Subtask("Sub", "desc", Status.NEW, epicId, startTime, duration);
+        int subtaskId = manager.addSubtask(subtask);
+
+        assertEquals(epicId, manager.getSubtask(subtaskId).getEpicId(),
+                "У подзадачи должен быть корректный epicId");
+    }
+
+    @Test
+    void epicStatusShouldBeCalculatedFromSubtasks() {
+        Epic epic = new Epic("Epic", "desc", Status.NEW);
+        int epicId = manager.addEpic(epic);
+
+        Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId, startTime, duration);
+        Subtask sub2 = new Subtask("Sub2", "desc", Status.NEW, epicId, startTime.plusMinutes(40), duration);
+        manager.addSubtask(sub1);
+        manager.addSubtask(sub2);
+
+        assertEquals(Status.NEW, manager.getEpic(epicId).getStatus(),
+                "Если все подзадачи NEW — эпик должен быть NEW");
+
+        sub1.setStatus(Status.DONE);
+        manager.updateSubtask(sub1);
+        sub2.setStatus(Status.DONE);
+        manager.updateSubtask(sub2);
+
+        assertEquals(Status.DONE, manager.getEpic(epicId).getStatus(),
+                "Если все подзадачи DONE — эпик должен быть DONE");
+
+        sub1.setStatus(Status.IN_PROGRESS);
+        manager.updateSubtask(sub1);
+
+        assertEquals(Status.IN_PROGRESS, manager.getEpic(epicId).getStatus(),
+                "Если статусы разные — эпик должен быть IN_PROGRESS");
+    }
+
+    @Test
+    void tasksWithOverlappingTimeShouldNotBeAdded() {
+        Task t1 = new Task("t1", "desc", Status.NEW, startTime, duration);
+        Task t2 = new Task("t2", "desc", Status.NEW, startTime.plusMinutes(10), duration);
+
+        manager.addTask(t1);
+
+        Exception e = assertThrows(IllegalArgumentException.class,
+                () -> manager.addTask(t2),
+                "Должно быть исключение при пересечении времени");
+
+        assertTrue(e.getMessage().contains("пересекается"),
+                "Сообщение должно явно указывать на пересечение времени");
+    }
+
+    @Test
+    void deletingEpicAlsoRemovesSubtasksAndHistory() {
+        Epic epic = new Epic("Epic", "desc", Status.NEW);
+        int epicId = manager.addEpic(epic);
+
+        Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId, startTime, duration);
+        Subtask sub2 = new Subtask("Sub2", "desc", Status.NEW, epicId, startTime.plusMinutes(40), duration);
         int subId1 = manager.addSubtask(sub1);
         int subId2 = manager.addSubtask(sub2);
 
+        // Добавляем в историю
         manager.getEpic(epicId);
         manager.getSubtask(subId1);
         manager.getSubtask(subId2);
 
-        assertEquals(3, manager.getHistory().size(), "Элементы не попали в историю");
+        assertEquals(3, manager.getHistory().size(), "Элементы должны быть в истории");
 
         manager.deleteEpic(epicId);
 
-        assertTrue(manager.getHistory().isEmpty(), "Эпик и его подзадачи не удалены из истории");
+        assertTrue(manager.getHistory().isEmpty(),
+                "После удаления эпика и его подзадач история должна быть очищена");
     }
 }
