@@ -2,19 +2,22 @@ import manager.Managers;
 import manager.TaskManager;
 import model.*;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 public class Main {
     public static void main(String[] args) {
         TaskManager manager = Managers.getDefault();
 
-        int task1Id = manager.addTask(new Task("Переезд", "Организовать переезд", Status.NEW));
-        int task2Id = manager.addTask(new Task("Ремонт", "Сделать косметику", Status.NEW));
+        int task1Id = manager.addTask(new Task("Переезд", "Организовать переезд", Status.NEW, LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
+        int task2Id = manager.addTask(new Task("Ремонт", "Сделать косметику", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
 
-        int epic1Id = manager.addEpic(new Epic("Праздник", "Организация семейного", Status.NEW));
-        int epic2Id = manager.addEpic(new Epic("Покупка", "Купить квартиру", Status.NEW));
+        int epic1Id = manager.addEpic(new Epic("Праздник", "Организация семейного", Status.NEW, LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
+        int epic2Id = manager.addEpic(new Epic("Покупка", "Купить квартиру", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
 
-        manager.addSubtask(new Subtask("Купить еду", "Список и в магазин", Status.NEW, epic1Id));
-        manager.addSubtask(new Subtask("Украсить зал", "Купить декор", Status.NEW, epic1Id));
-        manager.addSubtask(new Subtask("Риелтор", "Найти агента", Status.NEW, epic2Id));
+        manager.addSubtask(new Subtask("Купить еду", "Список и в магазин", Status.NEW, epic1Id, LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
+        manager.addSubtask(new Subtask("Украсить зал", "Купить декор", Status.NEW, epic1Id, LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
+        manager.addSubtask(new Subtask("Риелтор", "Найти агента", Status.NEW, epic2Id, LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3)));
 
         manager.getEpic(epic1Id);
         manager.getTask(task1Id);
