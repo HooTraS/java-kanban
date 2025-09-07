@@ -119,7 +119,9 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
             boolean firstLine = true;
             while ((line = reader.readLine()) != null) {
-                if (firstLine) { firstLine = false; continue; }
+                if (firstLine) {
+                    firstLine = false; continue;
+                }
                 if (line.isBlank()) continue;
 
                 Task task = fromString(line);
