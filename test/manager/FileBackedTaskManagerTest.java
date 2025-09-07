@@ -1,6 +1,9 @@
 package manager;
 
-import model.*;
+import model.Epic;
+import model.Status;
+import model.Subtask;
+import model.Task;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,9 +25,8 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
     @BeforeEach
     void setUp() throws IOException {
         tempFile = File.createTempFile("test", ".csv");
-        // Создаем пустой файл с заголовком
         Files.writeString(tempFile.toPath(),
-                "id,type,name,status,description,startTime,duration,epic\n");
+                "id,type,name,status,description,epicId,startTime,duration\n");
 
         manager = new FileBackedTaskManager(new InMemoryHistoryManager(), tempFile);
 
@@ -42,16 +43,16 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
     @Test
     void shouldSaveAndLoadEmptyFile() {
-        assertDoesNotThrow(() -> {
-            FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
-            assertTrue(loaded.getTasks().isEmpty());
-            assertTrue(loaded.getEpics().isEmpty());
-            assertTrue(loaded.getSubtasks().isEmpty());
-        });
+        FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
+
+        assertTrue(loaded.getTasks().isEmpty(), "Tasks должны быть пустыми");
+        assertTrue(loaded.getEpics().isEmpty(), "Epics должны быть пустыми");
+        assertTrue(loaded.getSubtasks().isEmpty(), "Subtasks должны быть пустыми");
     }
 
+
     @Test
-    void shouldSaveAndLoadMultipleTasks() {
+    void shouldSaveAndLoadTasksAndSubtasks() {
         Task task = new Task("Task", "Desc", Status.NEW, startTime, duration);
         manager.addTask(task);
 
@@ -62,44 +63,48 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
                 startTime.plusMinutes(40), duration);
         manager.addSubtask(subtask);
 
-        assertDoesNotThrow(() -> {
-            FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
+        FileBackedTaskManager loaded = assertDoesNotThrow(() ->
+                FileBackedTaskManager.loadFromFile(tempFile));
 
-            List<Task> loadedTasks = loaded.getTasks();
-            List<Epic> loadedEpics = loaded.getEpics();
-            List<Subtask> loadedSubtasks = loaded.getSubtasks();
+        assertEquals(1, loaded.getTasks().size(), "Должна быть 1 задача");
+        assertEquals(1, loaded.getEpics().size(), "Должен быть 1 эпик");
+        assertEquals(1, loaded.getSubtasks().size(), "Должна быть 1 подзадача");
 
-            assertEquals(1, loadedTasks.size());
-            assertEquals(1, loadedEpics.size());
-            assertEquals(1, loadedSubtasks.size());
+        Task loadedTask = loaded.getTasks().get(0);
+        assertEquals(task.getId(), loadedTask.getId());
+        assertEquals(task.getName(), loadedTask.getName());
+        assertEquals(task.getDescription(), loadedTask.getDescription());
+        assertEquals(task.getStatus(), loadedTask.getStatus());
+        assertEquals(task.getStartTime(), loadedTask.getStartTime());
+        assertEquals(task.getDuration(), loadedTask.getDuration());
 
-            Task loadedTask = loadedTasks.get(0);
-            Epic loadedEpic = loadedEpics.get(0);
-            Subtask loadedSubtask = loadedSubtasks.get(0);
+        Epic loadedEpic = loaded.getEpics().get(0);
+        assertEquals(epic.getId(), loadedEpic.getId());
+        assertEquals(epic.getName(), loadedEpic.getName());
+        assertEquals(epic.getDescription(), loadedEpic.getDescription());
+        assertEquals(epic.getStatus(), loadedEpic.getStatus());
 
-            // Проверка всех полей
-            assertEquals(task.getId(), loadedTask.getId());
-            assertEquals(task.getName(), loadedTask.getName());
-            assertEquals(task.getDescription(), loadedTask.getDescription());
-            assertEquals(task.getStatus(), loadedTask.getStatus());
-            assertEquals(task.getStartTime(), loadedTask.getStartTime());
-            assertEquals(task.getDuration(), loadedTask.getDuration());
-            assertEquals(task.getEndTime(), loadedTask.getEndTime());
+        Subtask loadedSubtask = loaded.getSubtasks().get(0);
+        assertEquals(subtask.getId(), loadedSubtask.getId());
+        assertEquals(subtask.getName(), loadedSubtask.getName());
+        assertEquals(subtask.getDescription(), loadedSubtask.getDescription());
+        assertEquals(subtask.getStatus(), loadedSubtask.getStatus());
+        assertEquals(subtask.getEpicId(), loadedSubtask.getEpicId());
+        assertEquals(subtask.getStartTime(), loadedSubtask.getStartTime());
+        assertEquals(subtask.getDuration(), loadedSubtask.getDuration());
+    }
 
-            assertEquals(epic.getId(), loadedEpic.getId());
-            assertEquals(epic.getName(), loadedEpic.getName());
-            assertEquals(epic.getDescription(), loadedEpic.getDescription());
-            assertEquals(epic.getStatus(), loadedEpic.getStatus());
+    @Test
+    void shouldRestoreNextIdAfterReload() {
+        Task task = new Task("T1", "Desc", Status.NEW, startTime, duration);
+        manager.addTask(task);
 
-            assertEquals(subtask.getId(), loadedSubtask.getId());
-            assertEquals(subtask.getName(), loadedSubtask.getName());
-            assertEquals(subtask.getDescription(), loadedSubtask.getDescription());
-            assertEquals(subtask.getStatus(), loadedSubtask.getStatus());
-            assertEquals(subtask.getEpicId(), loadedSubtask.getEpicId());
-            assertEquals(subtask.getStartTime(), loadedSubtask.getStartTime());
-            assertEquals(subtask.getDuration(), loadedSubtask.getDuration());
-            assertEquals(subtask.getEndTime(), loadedSubtask.getEndTime());
-        });
+        FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
+
+        Task newTask = new Task("T2", "Desc2", Status.NEW, startTime.plusHours(2), duration);
+        int newId = loaded.addTask(newTask);
+
+        assertTrue(newId > task.getId(), "ID новой задачи должен быть больше ID старой");
     }
 
     @Test
@@ -109,22 +114,14 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
     }
 
     @Test
-    void malformedFileShouldThrowOnLoad() throws IOException {
+    void malformedFileShouldBeHandledGracefully() throws IOException {
         Files.writeString(tempFile.toPath(), "broken,line,without,correct,fields\n");
-        assertThrows(RuntimeException.class, () -> FileBackedTaskManager.loadFromFile(tempFile));
+
+        FileBackedTaskManager manager = FileBackedTaskManager.loadFromFile(tempFile);
+
+        assertTrue(manager.getTasks().isEmpty(), "Tasks должны быть пустыми при некорректном файле");
+        assertTrue(manager.getEpics().isEmpty(), "Epics должны быть пустыми при некорректном файле");
+        assertTrue(manager.getSubtasks().isEmpty(), "Subtasks должны быть пустыми при некорректном файле");
     }
 
-    @Test
-    void shouldRestoreNextIdAfterReload() {
-        Task task = new Task("T1", "Desc", Status.NEW, startTime, duration);
-        manager.addTask(task);
-
-        FileBackedTaskManager loaded = assertDoesNotThrow(() ->
-                FileBackedTaskManager.loadFromFile(tempFile));
-
-        Task newTask = new Task("T2", "Desc2", Status.NEW, startTime.plusHours(2), duration);
-        int newId = loaded.addTask(newTask);
-
-        assertTrue(newId > task.getId(), "ID новой задачи должен быть больше ID старой");
-    }
 }

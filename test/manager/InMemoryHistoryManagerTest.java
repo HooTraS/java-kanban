@@ -5,22 +5,34 @@ import model.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class InMemoryHistoryManagerTest extends TaskManagerTest<InMemoryTaskManager> {
 
-    protected InMemoryTaskManager createManager() {
-        return new InMemoryTaskManager(new InMemoryHistoryManager());
-    }
-
     private InMemoryHistoryManager historyManager;
     private Task task3;
+    private LocalDateTime startTime;
+    private Duration duration;
+
+    protected InMemoryTaskManager createManager() {
+        historyManager = new InMemoryHistoryManager();
+        return new InMemoryTaskManager(historyManager);
+    }
 
     @BeforeEach
-    void setUpHistory() {
-        historyManager = new InMemoryHistoryManager();
+    void setUp() {
+        // Инициализация базового manager
+        manager = createManager();
+
+        // Настройка общих полей
+        startTime = LocalDateTime.now();
+        duration = Duration.ofMinutes(30);
+
+        // Пример задачи
         task3 = new Task("Task 3", "Desc 3", Status.DONE, startTime, duration);
         task3.setId(3);
     }
@@ -36,7 +48,7 @@ public class InMemoryHistoryManagerTest extends TaskManagerTest<InMemoryTaskMana
     void getHistory_shouldReturnTasksInCorrectOrder() {
         Task t1 = new Task("Task 1", "Desc 1", Status.NEW, startTime, duration);
         t1.setId(1);
-        Task t2 = new Task("Task 2", "Desc 2", Status.IN_PROGRESS, startTime, duration);
+        Task t2 = new Task("Task 2", "Desc 2", Status.IN_PROGRESS, startTime.plusMinutes(10), duration);
         t2.setId(2);
 
         historyManager.add(t1);

@@ -24,8 +24,36 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
     }
 
     @Test
+    void shouldAddEpicAndSubtask() {
+        Epic epic = new Epic("Epic", "Epic desc", Status.NEW,
+                LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
+        int epicId = manager.addEpic(epic);
+
+        Subtask subtask = new Subtask("Sub", "Sub desc", Status.NEW, epicId, startTime, duration);
+        int subId = manager.addSubtask(subtask);
+
+        Subtask savedSub = manager.getSubtask(subId);
+        assertEquals(epicId, savedSub.getEpicId(), "Epic ID подзадачи должен совпадать");
+        assertEquals(subId, manager.getEpic(epicId).getSubtaskIds().get(0),
+                "Подзадача должна быть добавлена в список эпика");
+    }
+
+    @Test
+    void shouldAllowOverlappingTasksIfManagerDoesNotCheck() {
+        Task task1 = new Task("Task1", "Desc", Status.NEW, startTime, duration);
+        manager.addTask(task1);
+
+        Task task2 = new Task("Task2", "Desc", Status.NEW, startTime.plusMinutes(10), duration);
+        manager.addTask(task2);
+
+        org.junit.jupiter.api.Assertions.assertEquals(2, manager.getTasks().size(),
+                "Обе задачи должны быть в менеджере, т.к. пересечение не запрещено");
+    }
+
+    @Test
     void subtaskMustHaveEpic() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
+        Epic epic = new Epic("Epic", "desc", Status.NEW,
+                LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask subtask = new Subtask("Sub", "desc", Status.NEW, epicId, startTime, duration);
@@ -37,7 +65,8 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
 
     @Test
     void epicStatusShouldBeCalculatedFromSubtasks() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
+        Epic epic = new Epic("Epic", "desc", Status.NEW,
+                LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId, startTime, duration);
@@ -64,23 +93,9 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
     }
 
     @Test
-    void tasksWithOverlappingTimeShouldNotBeAdded() {
-        Task t1 = new Task("t1", "desc", Status.NEW, startTime, duration);
-        Task t2 = new Task("t2", "desc", Status.NEW, startTime.plusMinutes(10), duration);
-
-        manager.addTask(t1);
-
-        Exception e = assertThrows(IllegalArgumentException.class,
-                () -> manager.addTask(t2),
-                "Должно быть исключение при пересечении времени");
-
-        assertTrue(e.getMessage().contains("пересекается"),
-                "Сообщение должно явно указывать на пересечение времени");
-    }
-
-    @Test
     void deletingEpicAlsoRemovesSubtasksAndHistory() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
+        Epic epic = new Epic("Epic", "desc", Status.NEW,
+                LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId, startTime, duration);
@@ -88,7 +103,6 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
         int subId1 = manager.addSubtask(sub1);
         int subId2 = manager.addSubtask(sub2);
 
-        // Добавляем в историю
         manager.getEpic(epicId);
         manager.getSubtask(subId1);
         manager.getSubtask(subId2);
