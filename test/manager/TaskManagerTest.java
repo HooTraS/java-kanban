@@ -20,7 +20,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
         Task task = new Task("Task 1", "Desc", Status.NEW, startTime, duration);
         int id = manager.addTask(task);
 
-        Task saved = manager.getTaskById(id);
+        Task saved = manager.getTask(id);
         assertNotNull(saved);
         assertEquals(task.getName(), saved.getName());
         assertEquals(task.getDescription(), saved.getDescription());
@@ -29,20 +29,20 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void shouldAddEpicAndSubtask() {
-        Epic epic = new Epic("Epic", "Epic desc", Status.NEW);
+        Epic epic = new Epic("Epic", "Epic desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask subtask = new Subtask("Sub", "Sub desc", Status.NEW, epicId, startTime, duration);
         int subId = manager.addSubtask(subtask);
 
-        Subtask savedSub = manager.getSubtaskById(subId);
+        Subtask savedSub = manager.getSubtask(subId);
         assertEquals(epicId, savedSub.getEpicId());
-        assertEquals(epicId, manager.getEpicById(epicId).getSubtaskIds().get(0));
+        assertEquals(epicId, manager.getEpic(epicId).getSubtaskIds().get(0));
     }
 
     @Test
     void epicStatusShouldDependOnSubtasks() {
-        Epic epic = new Epic("Epic", "Epic desc", Status.NEW);
+        Epic epic = new Epic("Epic", "Epic desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask sub1 = new Subtask("Sub1", "Desc", Status.NEW, epicId, startTime, duration);
@@ -50,15 +50,15 @@ abstract class TaskManagerTest<T extends TaskManager> {
         manager.addSubtask(sub1);
         manager.addSubtask(sub2);
 
-        assertEquals(Status.NEW, manager.getEpicById(epicId).getStatus());
+        assertEquals(Status.NEW, manager.getEpic(epicId).getStatus());
 
         sub1.setStatus(Status.DONE);
         manager.updateSubtask(sub1);
-        assertEquals(Status.IN_PROGRESS, manager.getEpicById(epicId).getStatus());
+        assertEquals(Status.IN_PROGRESS, manager.getEpic(epicId).getStatus());
 
         sub2.setStatus(Status.DONE);
         manager.updateSubtask(sub2);
-        assertEquals(Status.DONE, manager.getEpicById(epicId).getStatus());
+        assertEquals(Status.DONE, manager.getEpic(epicId).getStatus());
     }
 
     @Test

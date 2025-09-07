@@ -13,11 +13,15 @@ public class Task {
     protected Duration duration;
     protected LocalDateTime startTime;
 
-    public Task(String name, String description, Status status) {
+    public Task(String name, String description, Status status,
+                LocalDateTime startTime, Duration duration) {
         this.name = name;
         this.description = description;
         this.status = status;
+        this.startTime = startTime;
+        this.duration = duration;
     }
+
 
     public LocalDateTime getEndTime() {
         if (startTime == null || duration == null) {

@@ -11,9 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class InMemoryHistoryManagerTest extends TaskManagerTest<InMemoryTaskManager> {
 
-    @Override
     protected InMemoryTaskManager createManager() {
-        return new InMemoryTaskManager();
+        return new InMemoryTaskManager(new InMemoryHistoryManager());
     }
 
     private InMemoryHistoryManager historyManager;

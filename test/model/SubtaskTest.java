@@ -14,7 +14,7 @@ public class SubtaskTest {
         LocalDateTime startTime = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
-        Epic epic = new Epic("Epic Title", "Epic Description", Status.NEW);
+        Epic epic = new Epic("Epic Title", "Epic Description", Status.NEW, startTime, duration);
         epic.setId(1);
 
         Subtask subtask = new Subtask(

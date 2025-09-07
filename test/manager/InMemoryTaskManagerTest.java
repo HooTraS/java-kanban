@@ -13,17 +13,19 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager> {
+    private LocalDateTime startTime;
+    private Duration duration;
 
     @BeforeEach
     void setup() {
-        manager = new InMemoryTaskManager();
+        manager = new InMemoryTaskManager(new InMemoryHistoryManager());
         startTime = LocalDateTime.now();
         duration = Duration.ofMinutes(30);
     }
 
     @Test
     void subtaskMustHaveEpic() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW);
+        Epic epic = new Epic("Epic", "desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask subtask = new Subtask("Sub", "desc", Status.NEW, epicId, startTime, duration);
@@ -35,7 +37,7 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
 
     @Test
     void epicStatusShouldBeCalculatedFromSubtasks() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW);
+        Epic epic = new Epic("Epic", "desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId, startTime, duration);
@@ -78,7 +80,7 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
 
     @Test
     void deletingEpicAlsoRemovesSubtasksAndHistory() {
-        Epic epic = new Epic("Epic", "desc", Status.NEW);
+        Epic epic = new Epic("Epic", "desc", Status.NEW,LocalDateTime.of(2025, 9, 2, 14, 0), Duration.ofHours(3));
         int epicId = manager.addEpic(epic);
 
         Subtask sub1 = new Subtask("Sub1", "desc", Status.NEW, epicId, startTime, duration);
