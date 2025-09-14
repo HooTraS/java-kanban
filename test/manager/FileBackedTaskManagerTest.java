@@ -1,6 +1,5 @@
 package manager;
 
-
 import model.Epic;
 import model.Status;
 import model.Subtask;
@@ -11,15 +10,21 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-class FileBackedTaskManagerTest {
+class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
+    @Override
+    protected FileBackedTaskManager createManager() {
+        return null;
+    }
+
+    @BeforeEach
+    void setup() {
+        manager = createManager();
+    }
     private File tempFile;
-    private FileBackedTaskManager manager;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -36,7 +41,6 @@ class FileBackedTaskManagerTest {
             }
         }
     }
-
 
     @Test
     void shouldSaveAndLoadEmptyFile() {
@@ -63,50 +67,30 @@ class FileBackedTaskManagerTest {
 
         FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
 
-        List<Task> originalTasks = manager.getTasks();
-        List<Epic> originalEpics = manager.getEpics();
-        List<Subtask> originalSubtasks = manager.getSubtasks();
-
-        List<Task> loadedTasks = loaded.getTasks();
-        List<Epic> loadedEpics = loaded.getEpics();
-        List<Subtask> loadedSubtasks = loaded.getSubtasks();
-
-        assertEquals(originalTasks.size(), loadedTasks.size());
-        assertEquals(originalEpics.size(), loadedEpics.size());
-        assertEquals(originalSubtasks.size(), loadedSubtasks.size());
-
-        for (int i = 0; i < originalTasks.size(); i++) {
-            Task expected = originalTasks.get(i);
-            Task actual = loadedTasks.get(i);
-            assertEquals(expected.getId(), actual.getId());
-            assertEquals(expected.getName(), actual.getName());
-            assertEquals(expected.getDescription(), actual.getDescription());
-            assertEquals(expected.getStatus(), actual.getStatus());
-            assertEquals(expected.getType(), actual.getType());
-        }
-
-        for (int i = 0; i < originalEpics.size(); i++) {
-            Epic expected = originalEpics.get(i);
-            Epic actual = loadedEpics.get(i);
-            assertEquals(expected.getId(), actual.getId());
-            assertEquals(expected.getName(), actual.getName());
-            assertEquals(expected.getDescription(), actual.getDescription());
-            assertEquals(expected.getStatus(), actual.getStatus());
-            assertEquals(expected.getSubtaskIds(), actual.getSubtaskIds());
-
-        }
-
-        for (int i = 0; i < originalSubtasks.size(); i++) {
-            Subtask expected = originalSubtasks.get(i);
-            Subtask actual = loadedSubtasks.get(i);
-            assertEquals(expected.getId(), actual.getId());
-            assertEquals(expected.getName(), actual.getName());
-            assertEquals(expected.getDescription(), actual.getDescription());
-            assertEquals(expected.getStatus(), actual.getStatus());
-            assertEquals(expected.getType(), actual.getType());
-            assertEquals(expected.getEpicId(), actual.getEpicId());
-        }
+        assertEquals(manager.getTasks(), loaded.getTasks());
+        assertEquals(manager.getEpics(), loaded.getEpics());
+        assertEquals(manager.getSubtasks(), loaded.getSubtasks());
     }
 
+
+    @Test
+    void loadFromNonExistentFileShouldThrow() {
+        File fakeFile = new File("nonexistent.csv");
+
+        assertThrows(RuntimeException.class, () -> {
+            FileBackedTaskManager.loadFromFile(fakeFile);
+        }, "Ожидалось исключение при загрузке несуществующего файла");
+    }
+
+    @Test
+    void saveAndLoadValidFileShouldNotThrow() {
+        Task task = new Task("Test", "Desc", Status.NEW);
+        manager.addTask(task);
+
+        assertDoesNotThrow(() -> {
+            FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
+            assertEquals(manager.getTasks(), loaded.getTasks());
+        }, "Корректное сохранение/загрузка не должно выбрасывать исключение");
+    }
 
 }
