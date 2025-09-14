@@ -10,35 +10,31 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
+
+    private File tempFile;
+    private FileBackedTaskManager fileBackedManager;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        tempFile = Files.createTempFile("tasks", ".csv").toFile();
+        fileBackedManager = new FileBackedTaskManager(tempFile.toPath(), new InMemoryHistoryManager());
+        manager = fileBackedManager;
+    }
 
     @Override
     protected FileBackedTaskManager createManager() {
         return null;
     }
 
-    @BeforeEach
-    void setup() {
-        manager = createManager();
-    }
-    private File tempFile;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        tempFile = File.createTempFile("test", ".csv");
-        manager = new FileBackedTaskManager(tempFile.toPath(), new InMemoryHistoryManager());
-    }
-
     @AfterEach
     void tearDown() {
-        if (tempFile.exists()) {
-            boolean deleted = tempFile.delete();
-            if (!deleted) {
-                System.err.println("Не удалось удалить временный файл: " + tempFile.getAbsolutePath());
-            }
+        if (tempFile != null && tempFile.exists() && !tempFile.delete()) {
+            System.err.println("Не удалось удалить временный файл: " + tempFile.getAbsolutePath());
         }
     }
 
@@ -72,7 +68,6 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
         assertEquals(manager.getSubtasks(), loaded.getSubtasks());
     }
 
-
     @Test
     void loadFromNonExistentFileShouldThrow() {
         File fakeFile = new File("nonexistent.csv");
@@ -84,13 +79,11 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
     @Test
     void saveAndLoadValidFileShouldNotThrow() {
-        Task task = new Task("Test", "Desc", Status.NEW);
+        Task task = new Task("Test task", "desc", Status.NEW);
         manager.addTask(task);
 
-        assertDoesNotThrow(() -> {
-            FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
-            assertEquals(manager.getTasks(), loaded.getTasks());
-        }, "Корректное сохранение/загрузка не должно выбрасывать исключение");
-    }
+        FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
 
+        assertEquals(manager.getTasks(), loaded.getTasks(), "Списки задач должны совпадать");
+    }
 }

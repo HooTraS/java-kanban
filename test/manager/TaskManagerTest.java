@@ -34,7 +34,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
         int id1 = manager.addTask(t1);
 
         Task t2 = new Task("t2", "d", Status.NEW);
-        t2.setId(999); // ручной id
+        t2.setId(999);
         int id2 = manager.addTask(t2);
 
         assertNotEquals(id1, id2);
