@@ -1,7 +1,6 @@
 package model;
 
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EpicTest {
@@ -25,7 +24,7 @@ public class EpicTest {
         task1.setId(100);
         task2.setId(100);
 
-        assertEquals(task1, task2, "Tasks with the same id should be equal");
+        assertEquals(task1, task2);
     }
 
     @Test
@@ -51,5 +50,47 @@ public class EpicTest {
         subtask2.setId(400);
 
         assertEquals(subtask1, subtask2);
+    }
+
+    @Test
+    void epicStatusAllNew() {
+        Status[] subtasks = {Status.NEW, Status.NEW};
+        Status expected = calculateEpicStatus(subtasks);
+        assertEquals(Status.NEW, expected);
+    }
+
+    @Test
+    void epicStatusAllDone() {
+        Status[] subtasks = {Status.DONE, Status.DONE};
+        Status expected = calculateEpicStatus(subtasks);
+        assertEquals(Status.DONE, expected);
+    }
+
+    @Test
+    void epicStatusNewAndDone() {
+        Status[] subtasks = {Status.NEW, Status.DONE};
+        Status expected = calculateEpicStatus(subtasks);
+        assertEquals(Status.IN_PROGRESS, expected);
+    }
+
+    @Test
+    void epicStatusAllInProgress() {
+        Status[] subtasks = {Status.IN_PROGRESS, Status.IN_PROGRESS};
+        Status expected = calculateEpicStatus(subtasks);
+        assertEquals(Status.IN_PROGRESS, expected);
+    }
+
+    private Status calculateEpicStatus(Status[] subtasks) {
+        boolean allNew = true;
+        boolean allDone = true;
+
+        for (Status status : subtasks) {
+            if (status != Status.NEW) allNew = false;
+            if (status != Status.DONE) allDone = false;
+        }
+
+        if (allNew) return Status.NEW;
+        if (allDone) return Status.DONE;
+        return Status.IN_PROGRESS;
     }
 }
