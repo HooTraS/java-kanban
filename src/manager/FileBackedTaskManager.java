@@ -12,7 +12,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     private final Path file;
     private static final String HEADER = "id,type,name,status,description,duration,startTime,endTime,epic";
 
-
     public FileBackedTaskManager(Path file, HistoryManager historyManager) {
         super(historyManager);
         this.file = file;
@@ -65,8 +64,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 if (id > maxId) {
                     maxId = id;
                 }
+
                 switch (task.getType()) {
-                    case TASK -> manager.tasks.put(id, task);
+                    case TASK -> {
+                        manager.tasks.put(id, task);
+                        if (task.getStartTime() != null) {
+                            manager.prioritizedTasks.add(task);
+                        }
+                    }
                     case EPIC -> manager.epics.put(id, (Epic) task);
                     case SUBTASK -> {
                         Subtask subtask = (Subtask) task;
@@ -74,6 +79,9 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                         Epic epic = manager.epics.get(subtask.getEpicId());
                         if (epic != null) {
                             epic.getSubtaskIds().add(id);
+                        }
+                        if (subtask.getStartTime() != null) {
+                            manager.prioritizedTasks.add(subtask);
                         }
                     }
                 }
