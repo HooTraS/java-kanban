@@ -20,11 +20,14 @@ public class Subtask extends Task {
     @Override
     public String toString() {
         return "Subtask{" +
-                "id=" + getId() +
-                ", name='" + getName() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", status=" + getStatus() +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", status=" + status +
+                ", description='" + description + '\'' +
                 ", epicId=" + epicId +
+                ", duration=" + (duration != null ? duration.toMinutes() + "m" : "null") +
+                ", startTime=" + (startTime != null ? startTime : "null") +
+                ", endTime=" + (getEndTime() != null ? getEndTime() : "null") +
                 '}';
     }
 }
