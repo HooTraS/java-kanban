@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 class TasksHandler extends BaseHttpHandler implements HttpHandler {
+
     private final TaskManager manager;
     private final Gson gson = HttpTaskServer.getGson();
 

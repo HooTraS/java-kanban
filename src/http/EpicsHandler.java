@@ -4,16 +4,17 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import manager.TaskManager;
-import model.Subtask;
+import model.Epic;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-class SubtasksHandler extends BaseHttpHandler implements HttpHandler {
+class EpicsHandler extends BaseHttpHandler implements HttpHandler {
+
     private final TaskManager manager;
     private final Gson gson = HttpTaskServer.getGson();
 
-    public SubtasksHandler(TaskManager manager) {
+    public EpicsHandler(TaskManager manager) {
         this.manager = manager;
     }
 
@@ -27,36 +28,32 @@ class SubtasksHandler extends BaseHttpHandler implements HttpHandler {
                 case "GET":
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
-                        Subtask subtask = manager.getSubtask(id);
-                        if (subtask == null) {
+                        Epic epic = manager.getEpic(id);
+                        if (epic == null) {
                             sendNotFound(h);
                         } else {
-                            sendText(h, gson.toJson(subtask), 200);
+                            sendText(h, gson.toJson(epic), 200);
                         }
                     } else {
-                        sendText(h, gson.toJson(manager.getSubtasks()), 200);
+                        sendText(h, gson.toJson(manager.getEpics()), 200);
                     }
                     break;
                 case "POST":
                     String body = new String(h.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-                    Subtask subtask = gson.fromJson(body, Subtask.class);
-                    try {
-                        if (subtask.getId() == 0) {
-                            manager.addSubtask(subtask);
-                        } else {
-                            manager.updateSubtask(subtask);
-                        }
-                        sendText(h, "", 201);
-                    } catch (RuntimeException e) {
-                        sendHasOverlaps(h);
+                    Epic epic = gson.fromJson(body, Epic.class);
+                    if (epic.getId() == 0) {
+                        manager.addEpic(epic);
+                    } else {
+                        manager.updateEpic(epic);
                     }
+                    sendText(h, "", 201);
                     break;
                 case "DELETE":
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
-                        manager.deleteSubtask(id);
+                        manager.deleteEpic(id);
                     } else {
-                        manager.clearAllSubtasks();
+                        manager.clearAllEpics();
                     }
                     sendText(h, "", 201);
                     break;

@@ -8,6 +8,7 @@ import manager.TaskManager;
 import java.io.IOException;
 
 class HistoryHandler extends BaseHttpHandler implements HttpHandler {
+
     private final TaskManager manager;
     private final Gson gson = HttpTaskServer.getGson();
 
