@@ -15,6 +15,7 @@ import java.net.http.HttpResponse;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class HttpTaskServerEpicsTest {
+
     private TaskManager manager;
     private HttpTaskServer server;
     private Gson gson = HttpTaskServer.getGson();

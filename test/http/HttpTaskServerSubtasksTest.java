@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class HttpTaskServerSubtasksTest {
+
     private TaskManager manager;
     private HttpTaskServer server;
     private Gson gson = HttpTaskServer.getGson();

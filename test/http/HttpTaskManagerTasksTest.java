@@ -22,6 +22,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpTaskManagerTasksTest {
+
     private TaskManager manager;
     private HttpTaskServer server;
     private Gson gson = HttpTaskServer.getGson();

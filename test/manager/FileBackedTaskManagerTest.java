@@ -100,11 +100,12 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
     void shouldRestorePrioritizedTasks() {
         Task task1 = new Task("Task 1", "Desc 1", Status.NEW);
         task1.setStartTime(LocalDateTime.parse("2025-09-20T09:00"));
-        task1.setDuration(Duration.ofDays(30));
+        task1.setDuration(Duration.ofDays(1));
 
         Task task2 = new Task("Task 2", "Desc 2", Status.NEW);
-        task2.setStartTime(LocalDateTime.parse("2025-09-20T08:00"));
-        task2.setDuration(Duration.ofDays(45));
+        task2.setStartTime(LocalDateTime.parse("2025-09-21T09:00"));
+        task2.setDuration(Duration.ofDays(1));
+
 
         manager.addTask(task1);
         manager.addTask(task2);
