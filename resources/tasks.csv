@@ -23,7 +23,9 @@ id,type,name,status,description,duration,startTime,endTime,epic
 36,TASK,Переезд,NEW,Организовать переезд,null,null,null,
 100,TASK,Ремонт,NEW,Сделать косметику,null,null,null,
 37,TASK,Ремонт,NEW,Сделать косметику,null,null,null,
+106,TASK,Переезд,NEW,Организовать переезд,null,null,null,
 43,TASK,Переезд,NEW,Организовать переезд,null,null,null,
+107,TASK,Ремонт,NEW,Сделать косметику,null,null,null,
 44,TASK,Ремонт,NEW,Сделать косметику,null,null,null,
 50,TASK,Переезд,NEW,Организовать переезд,null,null,null,
 51,TASK,Ремонт,NEW,Сделать косметику,null,null,null,
@@ -53,7 +55,9 @@ id,type,name,status,description,duration,startTime,endTime,epic
 38,EPIC,Праздник,NEW,Организация семейного,null,null,null,
 102,EPIC,Покупка,NEW,Купить квартиру,0,null,null,
 39,EPIC,Покупка,NEW,Купить квартиру,null,null,null,
+108,EPIC,Праздник,NEW,Организация семейного,0,null,null,
 45,EPIC,Праздник,NEW,Организация семейного,null,null,null,
+109,EPIC,Покупка,NEW,Купить квартиру,0,null,null,
 46,EPIC,Покупка,NEW,Купить квартиру,null,null,null,
 52,EPIC,Праздник,NEW,Организация семейного,0,null,null,
 53,EPIC,Покупка,NEW,Купить квартиру,0,null,null,
@@ -95,8 +99,11 @@ id,type,name,status,description,duration,startTime,endTime,epic
 41,SUBTASK,Украсить зал,NEW,Купить декор,-1,null,null,-1
 105,SUBTASK,Риелтор,NEW,Найти агента,null,null,null,102
 42,SUBTASK,Риелтор,NEW,Найти агента,-1,null,null,-1
+110,SUBTASK,Купить еду,NEW,Список и в магазин,null,null,null,108
 47,SUBTASK,Купить еду,NEW,Список и в магазин,45,null,null,-1
+111,SUBTASK,Украсить зал,NEW,Купить декор,null,null,null,108
 48,SUBTASK,Украсить зал,NEW,Купить декор,45,null,null,-1
+112,SUBTASK,Риелтор,NEW,Найти агента,null,null,null,109
 49,SUBTASK,Риелтор,NEW,Найти агента,46,null,null,-1
 54,SUBTASK,Купить еду,NEW,Список и в магазин,null,null,null,52
 55,SUBTASK,Украсить зал,NEW,Купить декор,null,null,null,52

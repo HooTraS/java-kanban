@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,6 +66,28 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
         manager.addSubtask(subtask);
 
         FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
+
+        List<Task> originalTasks = manager.getTasks();
+        List<Epic> originalEpics = manager.getEpics();
+        List<Subtask> originalSubtasks = manager.getSubtasks();
+
+        List<Task> loadedTasks = loaded.getTasks();
+        List<Epic> loadedEpics = loaded.getEpics();
+        List<Subtask> loadedSubtasks = loaded.getSubtasks();
+
+        assertEquals(originalTasks.size(), loadedTasks.size());
+        assertEquals(originalEpics.size(), loadedEpics.size());
+        assertEquals(originalSubtasks.size(), loadedSubtasks.size());
+
+        for (int i = 0; i < originalTasks.size(); i++) {
+            Task expected = originalTasks.get(i);
+            Task actual = loadedTasks.get(i);
+            assertEquals(expected.getId(), actual.getId());
+            assertEquals(expected.getName(), actual.getName());
+            assertEquals(expected.getDescription(), actual.getDescription());
+            assertEquals(expected.getStatus(), actual.getStatus());
+            assertEquals(expected.getType(), actual.getType());
+        }
 
         assertEquals(manager.getEpics().size(), loaded.getEpics().size());
         assertEquals(manager.getSubtasks().size(), loaded.getSubtasks().size());
