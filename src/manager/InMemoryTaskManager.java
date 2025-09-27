@@ -237,6 +237,7 @@ public class InMemoryTaskManager implements TaskManager {
     public List<Task> getPrioritizedTasks() {
         return new ArrayList<>(prioritizedTasks);
     }
+
     protected void updateEpicStatus(Epic epic) {
         List<Subtask> epicSubtasks = getEpicSubtasks(epic.getId());
 
@@ -252,6 +253,7 @@ public class InMemoryTaskManager implements TaskManager {
         else if (allDone) epic.setStatus(Status.DONE);
         else epic.setStatus(Status.IN_PROGRESS);
     }
+
     protected void updateEpicTime(Epic epic) {
         List<Subtask> epicSubtasks = getEpicSubtasks(epic.getId());
         if (epicSubtasks.isEmpty()) {
@@ -283,16 +285,19 @@ public class InMemoryTaskManager implements TaskManager {
         epic.setEndTime(end);
         epic.setDuration(Duration.ofMinutes(totalMinutes));
     }
+
     private void addToPrioritizedIfHasStart(Task task) {
         if (task != null && task.getStartTime() != null) {
             prioritizedTasks.add(task);
         }
     }
+
     private void removeFromPrioritizedIfHasStart(Task task) {
         if (task != null && task.getStartTime() != null) {
             prioritizedTasks.remove(task);
         }
     }
+
     private boolean isOverlapping(Task a, Task b) {
         if (a == null || b == null) return false;
         if (a.getStartTime() == null || a.getDuration() == null) return false;
@@ -305,6 +310,7 @@ public class InMemoryTaskManager implements TaskManager {
 
         return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
     }
+
     private boolean hasOverlap(Task candidate) {
         if (candidate.getStartTime() == null || candidate.getDuration() == null) return false;
 
