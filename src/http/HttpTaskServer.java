@@ -17,16 +17,16 @@ public class HttpTaskServer {
     private static final int PORT = 8080;
     private final HttpServer server;
     private final TaskManager manager;
-    private static final Gson gson = new Gson();
+    private static Gson gson = new Gson();
 
     public HttpTaskServer(TaskManager manager) throws IOException {
         this.manager = manager;
         server = HttpServer.create(new InetSocketAddress(PORT), 0);
-        server.createContext("/tasks", new TasksHandler(manager));
-        server.createContext("/subtasks", new SubtasksHandler(manager));
-        server.createContext("/epics", new EpicsHandler(manager));
-        server.createContext("/history", new HistoryHandler(manager));
-        server.createContext("/prioritized", new PrioritizedHandler(manager));
+        server.createContext("/tasks", new TasksHandler(manager, gson));
+        server.createContext("/subtasks", new SubtasksHandler(manager, gson));
+        server.createContext("/epics", new EpicsHandler(manager, gson));
+        server.createContext("/history", new HistoryHandler(manager, gson));
+        server.createContext("/prioritized", new PrioritizedHandler(manager, gson));
     }
 
     public void start() {

@@ -2,67 +2,68 @@ package http;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import manager.TaskManager;
 import model.Epic;
+
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-class EpicsHandler extends BaseHttpHandler implements HttpHandler {
+public class EpicsHandler extends BaseHttpHandler {
 
-    private final TaskManager manager;
-    private final Gson gson = HttpTaskServer.getGson();
-
-    public EpicsHandler(TaskManager manager) {
-        this.manager = manager;
+    public EpicsHandler(TaskManager manager, Gson gson) {
+        super(manager, gson);
     }
 
     @Override
-    public void handle(HttpExchange h) throws IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         try {
-            String method = h.getRequestMethod();
-            String query = h.getRequestURI().getQuery();
+            String method = exchange.getRequestMethod();
+            String query = exchange.getRequestURI().getQuery();
 
             switch (method) {
-                case "GET":
+                case "GET": {
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
-                        Epic epic = manager.getEpic(id);
-                        if (epic == null) {
-                            sendNotFound(h);
-                        } else {
-                            sendText(h, gson.toJson(epic), 200);
-                        }
+                        Epic e = manager.getEpic(id);
+                        if (e == null) sendNotFound(exchange);
+                        else sendText(exchange, gson.toJson(e), 200);
                     } else {
-                        sendText(h, gson.toJson(manager.getEpics()), 200);
+                        sendText(exchange, gson.toJson(manager.getEpics()), 200);
                     }
                     break;
-                case "POST":
-                    String body = new String(h.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                }
+                case "POST": {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    if (body == null || body.isBlank()) {
+                        sendText(exchange, "{\"error\":\"Empty body\"}", 400);
+                        return;
+                    }
                     Epic epic = gson.fromJson(body, Epic.class);
-                    if (epic.getId() == 0) {
-                        manager.addEpic(epic);
-                    } else {
-                        manager.updateEpic(epic);
+                    if (epic.getId() == 0) manager.addEpic(epic);
+                    else {
+                        sendText(exchange, "{\"error\":\"Updating epics not allowed\"}", 400);
+                        return;
                     }
-                    sendText(h, "", 201);
+                    sendText(exchange, "", 201);
                     break;
-                case "DELETE":
+                }
+                case "DELETE": {
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
                         manager.deleteEpic(id);
+                        sendText(exchange, "", 200);
                     } else {
-                        manager.clearAllEpics();
+                        sendText(exchange, "{\"error\":\"id required\"}", 400);
                     }
-                    sendText(h, "", 201);
                     break;
+                }
                 default:
-                    h.sendResponseHeaders(405, 0);
+                    sendNotFound(exchange);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            sendServerError(h);
+            System.out.println("Ошибка в EpicsHandler: " + e.getMessage());
+            sendServerError(exchange);
         }
     }
 }

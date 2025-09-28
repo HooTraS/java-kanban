@@ -63,37 +63,44 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
         manager.addEpic(epic);
 
         Subtask subtask = new Subtask("Subtask 1", "Sub description", Status.NEW, epic.getId());
+        subtask.setStartTime(LocalDateTime.parse("2025-09-20T10:00"));
+        subtask.setDuration(Duration.ofMinutes(30));
         manager.addSubtask(subtask);
 
         FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(tempFile);
 
-        List<Task> originalTasks = manager.getTasks();
         List<Epic> originalEpics = manager.getEpics();
         List<Subtask> originalSubtasks = manager.getSubtasks();
-
-        List<Task> loadedTasks = loaded.getTasks();
         List<Epic> loadedEpics = loaded.getEpics();
         List<Subtask> loadedSubtasks = loaded.getSubtasks();
 
-        assertEquals(originalTasks.size(), loadedTasks.size());
         assertEquals(originalEpics.size(), loadedEpics.size());
         assertEquals(originalSubtasks.size(), loadedSubtasks.size());
 
-        for (int i = 0; i < originalTasks.size(); i++) {
-            Task expected = originalTasks.get(i);
-            Task actual = loadedTasks.get(i);
-            assertEquals(expected.getId(), actual.getId());
-            assertEquals(expected.getName(), actual.getName());
-            assertEquals(expected.getDescription(), actual.getDescription());
-            assertEquals(expected.getStatus(), actual.getStatus());
-            assertEquals(expected.getType(), actual.getType());
-        }
+        Subtask expectedSub = originalSubtasks.get(0);
+        Subtask actualSub = loadedSubtasks.get(0);
 
-        assertEquals(manager.getEpics().size(), loaded.getEpics().size());
-        assertEquals(manager.getSubtasks().size(), loaded.getSubtasks().size());
+        assertEquals(expectedSub.getId(), actualSub.getId());
+        assertEquals(expectedSub.getName(), actualSub.getName());
+        assertEquals(expectedSub.getDescription(), actualSub.getDescription());
+        assertEquals(expectedSub.getStatus(), actualSub.getStatus());
+        assertEquals(expectedSub.getType(), actualSub.getType());
+        assertEquals(expectedSub.getStartTime(), actualSub.getStartTime());
+        assertEquals(expectedSub.getDuration(), actualSub.getDuration());
+        assertEquals(expectedSub.getEndTime(), actualSub.getEndTime());
+        assertEquals(expectedSub.getEpicId(), actualSub.getEpicId());
 
-        assertTrue(loaded.getEpics().containsAll(manager.getEpics()));
-        assertTrue(loaded.getSubtasks().containsAll(manager.getSubtasks()));
+        Epic expectedEpic = originalEpics.get(0);
+        Epic actualEpic = loadedEpics.get(0);
+
+        assertEquals(expectedEpic.getId(), actualEpic.getId());
+        assertEquals(expectedEpic.getName(), actualEpic.getName());
+        assertEquals(expectedEpic.getDescription(), actualEpic.getDescription());
+        assertEquals(expectedEpic.getStatus(), actualEpic.getStatus());
+        assertEquals(expectedEpic.getType(), actualEpic.getType());
+        assertEquals(expectedEpic.getStartTime(), actualEpic.getStartTime());
+        assertEquals(expectedEpic.getDuration(), actualEpic.getDuration());
+        assertEquals(expectedEpic.getEndTime(), actualEpic.getEndTime());
     }
 
     @Test

@@ -9,65 +9,62 @@ import model.Subtask;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-class SubtasksHandler extends BaseHttpHandler implements HttpHandler {
+public class SubtasksHandler extends BaseHttpHandler {
 
-    private final TaskManager manager;
-    private final Gson gson = HttpTaskServer.getGson();
-
-    public SubtasksHandler(TaskManager manager) {
-        this.manager = manager;
+    public SubtasksHandler(TaskManager manager, Gson gson) {
+        super(manager, gson);
     }
 
     @Override
-    public void handle(HttpExchange h) throws IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         try {
-            String method = h.getRequestMethod();
-            String query = h.getRequestURI().getQuery();
+            String method = exchange.getRequestMethod();
+            String query = exchange.getRequestURI().getQuery();
 
             switch (method) {
-                case "GET":
+                case "GET": {
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
-                        Subtask subtask = manager.getSubtask(id);
-                        if (subtask == null) {
-                            sendNotFound(h);
-                        } else {
-                            sendText(h, gson.toJson(subtask), 200);
-                        }
+                        Subtask st = manager.getSubtask(id);
+                        if (st == null) sendNotFound(exchange);
+                        else sendText(exchange, gson.toJson(st), 200);
                     } else {
-                        sendText(h, gson.toJson(manager.getSubtasks()), 200);
+                        sendText(exchange, gson.toJson(manager.getSubtasks()), 200);
                     }
                     break;
-                case "POST":
-                    String body = new String(h.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                }
+                case "POST": {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    if (body == null || body.isBlank()) {
+                        sendText(exchange, "{\"error\":\"Empty body\"}", 400);
+                        return;
+                    }
                     Subtask subtask = gson.fromJson(body, Subtask.class);
                     try {
-                        if (subtask.getId() == 0) {
-                            manager.addSubtask(subtask);
-                        } else {
-                            manager.updateSubtask(subtask);
-                        }
-                        sendText(h, "", 201);
+                        if (subtask.getId() == 0) manager.addSubtask(subtask);
+                        else manager.updateSubtask(subtask);
+                        sendText(exchange, "", 201);
                     } catch (RuntimeException e) {
-                        sendHasOverlaps(h);
+                        sendHasOverlaps(exchange);
                     }
                     break;
-                case "DELETE":
+                }
+                case "DELETE": {
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
                         manager.deleteSubtask(id);
+                        sendText(exchange, "", 200);
                     } else {
-                        manager.clearAllSubtasks();
+                        sendText(exchange, "{\"error\":\"id required\"}", 400);
                     }
-                    sendText(h, "", 201);
                     break;
+                }
                 default:
-                    h.sendResponseHeaders(405, 0);
+                    sendNotFound(exchange);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            sendServerError(h);
+            System.out.println("Ошибка в SubtasksHandler: " + e.getMessage());
+            sendServerError(exchange);
         }
     }
 }
-

@@ -7,26 +7,23 @@ import manager.TaskManager;
 
 import java.io.IOException;
 
-class PrioritizedHandler extends BaseHttpHandler implements HttpHandler {
+public class PrioritizedHandler extends BaseHttpHandler {
 
-    private final TaskManager manager;
-    private final Gson gson = HttpTaskServer.getGson();
-
-    public PrioritizedHandler(TaskManager manager) {
-        this.manager = manager;
+    public PrioritizedHandler(TaskManager manager, Gson gson) {
+        super(manager, gson);
     }
 
     @Override
-    public void handle(HttpExchange h) throws IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         try {
-            if ("GET".equals(h.getRequestMethod())) {
-                sendText(h, gson.toJson(manager.getPrioritizedTasks()), 200);
+            if ("GET".equals(exchange.getRequestMethod())) {
+                sendText(exchange, gson.toJson(manager.getPrioritizedTasks()), 200);
             } else {
-                h.sendResponseHeaders(405, 0);
+                sendNotFound(exchange);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            sendServerError(h);
+            System.out.println("Ошибка в PrioritizedHandler: " + e.getMessage());
+            sendServerError(exchange);
         }
     }
 }

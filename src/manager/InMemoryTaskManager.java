@@ -15,7 +15,6 @@ public class InMemoryTaskManager implements TaskManager {
     protected final HistoryManager historyManager;
     protected int nextId = 1;
 
-    // Навигационное множество: быстрый доступ к соседям по времени
     protected final NavigableSet<Task> prioritizedTasks = new TreeSet<>(
             Comparator
                     .comparing(Task::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()))
@@ -32,8 +31,8 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public int addTask(Task task) {
-        task.setId(generateId());
         ensureNoOverlap(task);
+        task.setId(generateId());
         tasks.put(task.getId(), task);
         addToPrioritizedIfHasStart(task);
         return task.getId();
@@ -43,7 +42,6 @@ public class InMemoryTaskManager implements TaskManager {
     public int addEpic(Epic epic) {
         epic.setId(generateId());
         epics.put(epic.getId(), epic);
-        updateEpicTime(epic);
         return epic.getId();
     }
 
@@ -54,8 +52,8 @@ public class InMemoryTaskManager implements TaskManager {
         if (epic == null) {
             throw new IllegalArgumentException("Эпик с id=" + epicId + " не найден");
         }
-        subtask.setId(generateId());
         ensureNoOverlap(subtask);
+        subtask.setId(generateId());
         subtasks.put(subtask.getId(), subtask);
         epic.addSubtaskId(subtask.getId());
         addToPrioritizedIfHasStart(subtask);
@@ -118,11 +116,12 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void updateEpic(Epic epic) {
-        if (!epics.containsKey(epic.getId())) return;
-        epics.put(epic.getId(), epic);
-        updateEpicStatus(epic);
-        updateEpicTime(epic);
+    public void updateEpic(Epic newEpic) {
+        Epic old = epics.get(newEpic.getId());
+        if (old != null) {
+            old.setName(newEpic.getName());
+            old.setDescription(newEpic.getDescription());
+        }
     }
 
     @Override

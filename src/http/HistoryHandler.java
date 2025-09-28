@@ -2,32 +2,27 @@ package http;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import manager.TaskManager;
 
 import java.io.IOException;
 
-class HistoryHandler extends BaseHttpHandler implements HttpHandler {
+public class HistoryHandler extends BaseHttpHandler {
 
-    private final TaskManager manager;
-    private final Gson gson = HttpTaskServer.getGson();
-
-    public HistoryHandler(TaskManager manager) {
-        this.manager = manager;
+    public HistoryHandler(TaskManager manager, Gson gson) {
+        super(manager, gson);
     }
 
     @Override
-    public void handle(HttpExchange h) throws IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         try {
-            if ("GET".equals(h.getRequestMethod())) {
-                sendText(h, gson.toJson(manager.getHistory()), 200);
+            if ("GET".equals(exchange.getRequestMethod())) {
+                sendText(exchange, gson.toJson(manager.getHistory()), 200);
             } else {
-                h.sendResponseHeaders(405, 0);
+                sendNotFound(exchange);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            sendServerError(h);
+            System.out.println("Ошибка в HistoryHandler: " + e.getMessage());
+            sendServerError(exchange);
         }
     }
 }
-

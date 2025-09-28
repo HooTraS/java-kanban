@@ -1,11 +1,22 @@
 package http;
 
+import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import manager.TaskManager;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class BaseHttpHandler {
+public abstract class BaseHttpHandler implements HttpHandler {
+
+    protected final TaskManager manager;
+    protected final Gson gson;
+
+    protected BaseHttpHandler(TaskManager manager, Gson gson) {
+        this.manager = manager;
+        this.gson = gson;
+    }
 
     protected void sendText(HttpExchange h, String text, int code) throws IOException {
         byte[] resp = text.getBytes(StandardCharsets.UTF_8);
@@ -27,4 +38,3 @@ public class BaseHttpHandler {
         sendText(h, "{\"error\":\"Internal Server Error\"}", 500);
     }
 }
-
