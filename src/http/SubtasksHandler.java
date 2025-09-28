@@ -34,17 +34,21 @@ public class SubtasksHandler extends BaseHttpHandler {
                 }
                 case "POST": {
                     String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-                    if (body == null || body.isBlank()) {
-                        sendText(exchange, "{\"error\":\"Empty body\"}", 400);
+                    if (body.isBlank()) {
+                        sendText(exchange, "{\"error\":\"Empty request body\"}", 400);
                         return;
                     }
                     Subtask subtask = gson.fromJson(body, Subtask.class);
-                    try {
-                        if (subtask.getId() == 0) manager.addSubtask(subtask);
-                        else manager.updateSubtask(subtask);
-                        sendText(exchange, "", 201);
-                    } catch (RuntimeException e) {
-                        sendHasOverlaps(exchange);
+                    if (subtask.getId() == 0) {
+                        int id = manager.addSubtask(subtask);
+                        sendText(exchange, gson.toJson(manager.getSubtask(id)), 201);
+                    } else {
+                        if (manager.getSubtask(subtask.getId()) != null) {
+                            manager.updateSubtask(subtask);
+                            sendText(exchange, gson.toJson(manager.getSubtask(subtask.getId())), 200);
+                        } else {
+                            sendText(exchange, "{\"error\":\"Subtask not found\"}", 404);
+                        }
                     }
                     break;
                 }

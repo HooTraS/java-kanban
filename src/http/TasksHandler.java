@@ -25,8 +25,11 @@ public class TasksHandler extends BaseHttpHandler {
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
                         Task t = manager.getTask(id);
-                        if (t == null) sendNotFound(exchange);
-                        else sendText(exchange, gson.toJson(t), 200);
+                        if (t == null) {
+                            sendNotFound(exchange);
+                        } else {
+                            sendText(exchange, gson.toJson(t), 200);
+                        }
                     } else {
                         sendText(exchange, gson.toJson(manager.getTasks()), 200);
                     }
@@ -34,17 +37,23 @@ public class TasksHandler extends BaseHttpHandler {
                 }
                 case "POST": {
                     String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-                    if (body == null || body.isBlank()) {
-                        sendText(exchange, "{\"error\":\"Empty body\"}", 400);
+                    if (body.isBlank()) {
+                        sendText(exchange, "{\"error\":\"Empty request body\"}", 400);
                         return;
                     }
+
                     Task task = gson.fromJson(body, Task.class);
-                    try {
-                        if (task.getId() == 0) manager.addTask(task);
-                        else manager.updateTask(task);
-                        sendText(exchange, "", 201);
-                    } catch (RuntimeException e) {
-                        sendHasOverlaps(exchange);
+
+                    if (task.getId() == 0) {
+                        int id = manager.addTask(task);  // тут может прилететь IllegalStateException
+                        sendText(exchange, gson.toJson(manager.getTask(id)), 201);
+                    } else {
+                        if (manager.getTask(task.getId()) != null) {
+                            manager.updateTask(task);  // и тут тоже
+                            sendText(exchange, gson.toJson(manager.getTask(task.getId())), 200);
+                        } else {
+                            sendText(exchange, "{\"error\":\"Task not found\"}", 404);
+                        }
                     }
                     break;
                 }
@@ -61,6 +70,8 @@ public class TasksHandler extends BaseHttpHandler {
                 default:
                     sendNotFound(exchange);
             }
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            sendText(exchange, "{\"error\":\"Task time overlaps with another task\"}", 406);
         } catch (Exception e) {
             System.out.println("Ошибка в TasksHandler: " + e.getMessage());
             sendServerError(exchange);

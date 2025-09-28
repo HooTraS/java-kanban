@@ -35,19 +35,21 @@ public class EpicsHandler extends BaseHttpHandler {
                 }
                 case "POST": {
                     String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-                    if (body == null || body.isBlank()) {
-                        sendText(exchange, "{\"error\":\"Empty body\"}", 400);
+                    if (body.isBlank()) {
+                        sendText(exchange, "{\"error\":\"Empty request body\"}", 400);
                         return;
                     }
+
                     Epic epic = gson.fromJson(body, Epic.class);
-                    if (epic.getId() == 0) manager.addEpic(epic);
-                    else {
-                        sendText(exchange, "{\"error\":\"Updating epics not allowed\"}", 400);
-                        return;
+                    if (epic.getId() == 0) {
+                        int id = manager.addEpic(epic);
+                        sendText(exchange, gson.toJson(manager.getEpic(id)), 201);
+                    } else {
+                        sendText(exchange, "{\"error\":\"Epic update not supported\"}", 400);
                     }
-                    sendText(exchange, "", 201);
                     break;
                 }
+
                 case "DELETE": {
                     if (query != null && query.startsWith("id=")) {
                         int id = Integer.parseInt(query.substring(3));
