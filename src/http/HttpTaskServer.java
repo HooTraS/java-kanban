@@ -21,10 +21,13 @@ public class HttpTaskServer {
 
     public HttpTaskServer(TaskManager manager) throws IOException {
         this.manager = manager;
+        Gson gson = getGson();
+
         server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/tasks", new TasksHandler(manager, gson));
         server.createContext("/subtasks", new SubtasksHandler(manager, gson));
         server.createContext("/epics", new EpicsHandler(manager, gson));
+
         server.createContext("/history", new HistoryHandler(manager, gson));
         server.createContext("/prioritized", new PrioritizedHandler(manager, gson));
     }
@@ -69,7 +72,6 @@ public class HttpTaskServer {
 
         return builder.create();
     }
-
 
     public static void main(String[] args) throws IOException {
         HttpTaskServer taskServer = new HttpTaskServer(Managers.getDefault());
